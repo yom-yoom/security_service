@@ -54,5 +54,7 @@ public class SecurityConstants {
      * Время жизни токена обновления в миллисекундах
      */
     private Integer refreshLifetime;
+
+    private boolean isCookieSecure;
 }
 

@@ -15,7 +15,6 @@ import school.faang.springsecuritydemo.domain.RefreshToken;
 import school.faang.springsecuritydemo.domain.User;
 import school.faang.springsecuritydemo.dto.request.LoginRequest;
 import school.faang.springsecuritydemo.dto.request.RegistrationUserRequest;
-import school.faang.springsecuritydemo.dto.request.UpdateTokenRequest;
 import school.faang.springsecuritydemo.dto.response.JwtResponse;
 import school.faang.springsecuritydemo.dto.response.UserResponse;
 import school.faang.springsecuritydemo.exception.AppError;
@@ -117,14 +116,13 @@ public class AuthService {
      * генерирует новые access и refresh токены. Затем старый refresh токен удаляется,
      * и новый сохраняется в базе данных.
      *
-     * @param updateTokenRequest запрос с данным refresh токеном.
+     * @param oldRefreshToken переданный в header.
      * @return объект JwtResponse с новыми access и refresh токенами.
      * @throws AuthException если переданный refresh токен не действителен.
      */
     @Transactional
-    public JwtResponse attemptToRefreshTokens(UpdateTokenRequest updateTokenRequest)
+    public JwtResponse attemptToRefreshTokens(String oldRefreshToken)
             throws AuthException {
-        var oldRefreshToken = updateTokenRequest.getRefreshToken();
 
         // Проверка существования refresh токена
         if (!refreshTokenService.existsByToken(oldRefreshToken)) {
