@@ -46,6 +46,8 @@ public class AuthService {
     // Константы безопасности, включая секреты для токенов
     private final SecurityConstants securityConstants;
 
+    private final CustomUserDetailsService customUserDetailsService;
+
     /**
      * Создание новых JWT токенов (access и refresh) после успешной аутентификации пользователя.
      * <p>
@@ -63,7 +65,7 @@ public class AuthService {
 
         // Загрузка данных пользователя
         CustomUserDetails userDetails =
-                userService.loadUserByUsername(authRequest.getUsername());
+                customUserDetailsService.loadUserByUsername(authRequest.getUsername());
 
         // Генерация токенов
         var accessToken = jwtTokenUtils.generateAccessToken(userDetails);
@@ -131,7 +133,7 @@ public class AuthService {
 
         // Загрузка данных пользователя по старому refresh токену
         CustomUserDetails userDetails =
-                userService.loadUserByUsername(
+                customUserDetailsService.loadUserByUsername(
                         jwtTokenUtils.getUsername(oldRefreshToken,
                                 securityConstants.getRefreshSecret()));
 
