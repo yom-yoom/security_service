@@ -11,7 +11,7 @@ spring:
     name: post-service
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5432/faang
+    url: jdbc:postgresql://localhost:5432/postgres
     driver-class-name: org.postgresql.Driver
     username: faang
     password: faang
@@ -43,3 +43,4 @@ security:
     refresh-lifetime: 86400000
     auth-header: "Authorization"
     bearer-prefix: "Bearer "
+    cookie-secure: false
