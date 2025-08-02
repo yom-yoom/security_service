@@ -127,9 +127,7 @@ public class AuthService {
             throws AuthException {
 
         // Проверка существования refresh токена
-        if (!refreshTokenService.existsByToken(oldRefreshToken)) {
-            throw new AuthException("Переданный refresh-токен не действителен");
-        }
+        isTokenValid(oldRefreshToken);
 
         // Загрузка данных пользователя по старому refresh токену
         CustomUserDetails userDetails =
@@ -147,5 +145,16 @@ public class AuthService {
 
         // Возврат новых токенов
         return new JwtResponse(accessToken, refreshToken);
+    }
+
+    public void logout(String token) throws AuthException {
+        isTokenValid(token);
+        refreshTokenService.deleteByToken(token);
+    }
+
+    private void isTokenValid(String token) throws AuthException {
+        if (!refreshTokenService.existsByToken(token)) {
+            throw new AuthException("Переданный refresh-токен не действителен");
+        }
     }
 }

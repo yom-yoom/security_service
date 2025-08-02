@@ -1,11 +1,14 @@
 package school.faang.springsecuritydemo.controller;
 
 import jakarta.security.auth.message.AuthException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,17 +38,36 @@ public class AuthController {
                 .body("Login successful");
     }
 
-    @PostMapping("/refresh-tokens")
-    public ResponseEntity<String> attemptToRefreshToken(HttpServletRequest request)
-            throws AuthException {
-        String authHeader = request.getHeader(securityConstants.getAuthHeader());
-        String bearerPrefix = securityConstants.getBearerPrefix();
-
-        if (authHeader == null || !authHeader.startsWith(bearerPrefix)) {
-            throw new BadCredentialsException("Missing Authorization header");
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) throws AuthException {
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
         }
 
-        String refreshToken = authHeader.substring(bearerPrefix.length());
+        if (refreshToken != null) {
+            authService.logout(refreshToken);
+        }
+
+        Cookie clearCookie = new Cookie("refreshToken", null);
+        clearCookie.setHttpOnly(true);
+        clearCookie.setSecure(true);
+        clearCookie.setPath("/");
+        clearCookie.setMaxAge(0);
+        response.addCookie(clearCookie);
+
+        return ResponseEntity.ok().body("Logout successful");
+    }
+
+    @PostMapping("/refresh-tokens")
+    public ResponseEntity<String> attemptToRefreshToken(HttpServletRequest request) throws AuthException {
+        String refreshToken = checkAuthorization(request);
         JwtResponse response = authService.attemptToRefreshTokens(refreshToken);
         ResponseCookie refreshCookie = createResponseCookie(response);
         return ResponseEntity.ok()
@@ -68,5 +90,14 @@ public class AuthController {
                 .maxAge(securityConstants.getRefreshLifetime())
                 .sameSite("Strict")
                 .build();
+    }
+
+    private String checkAuthorization(HttpServletRequest request) {
+        String authHeader = request.getHeader(securityConstants.getAuthHeader());
+        String bearerPrefix = securityConstants.getBearerPrefix();
+        if (authHeader == null || !authHeader.startsWith(bearerPrefix)) {
+            throw new BadCredentialsException("Missing Authorization header");
+        }
+        return authHeader.substring(bearerPrefix.length());
     }
 }
