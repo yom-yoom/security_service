@@ -10,6 +10,7 @@ import school.faang.springsecuritydemo.auth.CustomUserDetails;
 import school.faang.springsecuritydemo.domain.User;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +37,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // Преобразование ролей пользователя в список SimpleGrantedAuthority
         Collection<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .toList();
+                .flatMap(role -> role.getPrivileges().stream())
+                .map(privilege -> new SimpleGrantedAuthority(privilege.name()))
+                .collect(Collectors.toSet());
 
         // Возвращаем объект CustomUserDetails
         return new CustomUserDetails(

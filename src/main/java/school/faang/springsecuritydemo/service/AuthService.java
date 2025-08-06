@@ -41,7 +41,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     // Сервис для работы с refresh-токенами
-    private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenRedisService refreshTokenService;
 
     // Константы безопасности, включая секреты для токенов
     private final SecurityConstants securityConstants;
@@ -72,7 +72,10 @@ public class AuthService {
         var refreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
 
         // Сохранение refresh токена в базе данных
-        refreshTokenService.save(new RefreshToken(refreshToken, userDetails.getId()));
+        refreshTokenService.save(RefreshToken.builder()
+                .token(refreshToken)
+                .userId(userDetails.getId())
+                .build());
 
         // Возврат токенов
         return new JwtResponse(accessToken, refreshToken);
@@ -141,7 +144,10 @@ public class AuthService {
 
         // Удаление старого refresh токена и сохранение нового
         refreshTokenService.deleteByToken(oldRefreshToken);
-        refreshTokenService.save(new RefreshToken(refreshToken, userDetails.getId()));
+        refreshTokenService.save(RefreshToken.builder()
+                .token(refreshToken)
+                .userId(userDetails.getId())
+                .build());
 
         // Возврат новых токенов
         return new JwtResponse(accessToken, refreshToken);
